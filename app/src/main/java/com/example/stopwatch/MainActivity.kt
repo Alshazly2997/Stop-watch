@@ -4,59 +4,79 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.widget.Button
 import android.widget.Chronometer
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var stopwatch: Chronometer //The stopwatch
-    var running = false //To know if the stopwatch is running or not
+    lateinit var stopWatch: Chronometer//The stopwatch
+    var running = false//Is the stopwatch running?
     var offset: Long = 0 //The base offset for the stopwatch
+
+    //Add key strings for use with the bundle
+    val OFFSET_KEY = "offset"
+    val RUNNING_KEY = "running"
+    val BASE_KEY = "base"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //The elements of the layout
-        stopwatch = findViewById(R.id.stopwatch)
+        //Get reference to the stopwatch
+        stopWatch = findViewById<Chronometer>(R.id.stopwatch)
+
+        //Restore the previous state
+        if (savedInstanceState != null) {
+            offset = savedInstanceState.getLong(OFFSET_KEY)
+            running = savedInstanceState.getBoolean(RUNNING_KEY)
+            if (running) {
+                stopWatch.base = savedInstanceState.getLong(BASE_KEY)
+                stopWatch.start()
+            } else setBaseTime()
+        }
+        //Get reference to the Buttons
         val startButton = findViewById<Button>(R.id.start_button)
         val pauseButton = findViewById<Button>(R.id.pause_button)
         val resetButton = findViewById<Button>(R.id.reset_button)
 
-        //To start the stopwatch if it's not
+        //The start button start the stopwatch if it's not running
         startButton.setOnClickListener {
-            if (!running){
+            if (!running) {
                 setBaseTime()
-                stopwatch.start()
+                stopWatch.start()
                 running = true
             }
         }
 
-        //To pause the stopwatch
+        //The pause button pauses the stopwatch if it's running
         pauseButton.setOnClickListener {
-            if (running){
+            if (running) {
                 saveOffset()
-                stopwatch.stop()
+                stopWatch.stop()
                 running = false
             }
         }
 
-        //To reset the stopwatch
+        //The reset button sets the offset and stopwatch to 0
         resetButton.setOnClickListener {
             offset = 0
             setBaseTime()
         }
     }
 
-    //Get the base time for the stopwatch
-    fun setBaseTime() {
-        stopwatch.base = SystemClock.elapsedRealtime() - offset
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        savedInstanceState.putLong(OFFSET_KEY, offset)
+        savedInstanceState.putBoolean(RUNNING_KEY, running)
+        savedInstanceState.putLong(BASE_KEY, stopWatch.base)
+        super.onSaveInstanceState(savedInstanceState)
     }
 
-    //Record the Offset
-    fun saveOffset() {
-        offset = SystemClock.elapsedRealtime() - stopwatch.base
+    //Update the stopwatch.base time, allowing for any offset
+    private fun setBaseTime(){
+        stopWatch.base = SystemClock.elapsedRealtime() - offset
+    }
+
+    //Record the offset
+    private fun saveOffset() {
+        offset = SystemClock.elapsedRealtime() - stopWatch.base
     }
 }
